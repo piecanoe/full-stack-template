@@ -1,29 +1,27 @@
 const cloudinary = require("../middleware/cloudinary");
 const Post = require("../models/Post");
-const Comment = require("../models/Comment")
 
 module.exports = {
   getProfile: async (req, res) => {
     try {
+      //Since we have a sessino each request (req) contains the logged-in user's info: req.user
+      //console.log(req.user) to see everything
+      //Grabbing just the posts of the logged-in user
       const posts = await Post.find({ user: req.user.id });
+      //Sending post data from MongoDB and user data to ejs template
       res.render("profile.ejs", { posts: posts, user: req.user });
-    } catch (err) {
-      console.log(err);
-    }
-  },
-  getFeed: async (req, res) => {
-    try {
-      const posts = await Post.find().sort({ createdAt: "desc" }).lean();
-      res.render("feed.ejs", { posts: posts });
     } catch (err) {
       console.log(err);
     }
   },
   getPost: async (req, res) => {
     try {
+      //id parameter comes from the post routes
+      //router.post("/createPost", upload.single("file"), postsController.createPost);
+      //http://localhost:2121/post/655e3a59faca7b44745f6a3f
+      //id === 655e3a59faca7b44745f6a3f
       const post = await Post.findById(req.params.id);
-      const comments = await Comment.find({post: req.params.id}).sort({ createdAt: "desc" }).lean();
-      res.render("post.ejs", { post: post, user: req.user, comments: comments });
+      res.render("post.ejs", { post: post, user: req.user });
     } catch (err) {
       console.log(err);
     }
@@ -33,6 +31,8 @@ module.exports = {
       // Upload image to cloudinary
       const result = await cloudinary.uploader.upload(req.file.path);
 
+
+      //media is stored on Cloudinary - the above request responds with url to media and the media id that you will need when deleting content
       await Post.create({
         title: req.body.title,
         image: result.secure_url,
